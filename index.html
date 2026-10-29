@@ -114,10 +114,11 @@ try {
   try {
     const { FBXLoader } = await import('three/addons/loaders/FBXLoader.js');
     const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
-    const mgr = new THREE.LoadingManager(); mgr.setURLModifier(u => /\.(png|jpe?g|tga|bmp|dds)(\?|$)/i.test(u) ? BLANK : u);
-    const list = ['132', 'nasim', 'l90', 'p206', 'p405', 'zamyad']; let done = 0;
-    await Promise.allSettled(list.map(async k => { try { models[k] = await new FBXLoader(mgr).loadAsync('models/' + k + '.fbx'); } catch (e) { console.warn('model', k, e); } done++; $('msg').textContent = 'در حال بارگذاری ماشین‌ها… ' + fa(done) + ' از ' + fa(list.length); }));
+    const mgr = new THREE.LoadingManager(); mgr.setURLModifier(u => /\.fbx(\?|$)/i.test(u) || u.startsWith('data:') ? u : BLANK);
+    const fails = []; window.__fails = fails; const list = ['132', 'nasim', 'l90', 'p206', 'p405', 'zamyad']; let done = 0;
+    await Promise.allSettled(list.map(async k => { try { models[k] = await new FBXLoader(mgr).loadAsync('models/' + k + '.fbx'); } catch (e) { console.warn('model', k, e); fails.push(k + ': ' + (e && e.message || e)); } done++; $('msg').textContent = 'در حال بارگذاری ماشین‌ها… ' + fa(done) + ' از ' + fa(list.length); }));
   } catch (e) { console.warn('FBX loader unavailable', e); }
+  { const n = Object.keys(models).length; if (n < 6) { const w = document.createElement('div'); w.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99;background:#b3261e;color:#fff;padding:8px 12px;font:13px Vazirmatn,sans-serif;text-align:center;direction:rtl'; w.textContent = 'فقط ' + n + ' مدل از ۶ مدل لود شد؛ پوشه‌ی models باید کنار index.html باشد و صفحه با http/https باز شود (نه دوبار کلیک روی فایل).'; document.body.appendChild(w); w.onclick = () => w.remove(); w.textContent += ' | آدرس: ' + new URL('models/132.fbx', location.href).href + ' | ' + (fails[0] || ''); }  }
   init(THREE, { EffectComposer: ec.EffectComposer, RenderPass: rp.RenderPass, UnrealBloomPass: ub.UnrealBloomPass, ShaderPass: sp.ShaderPass, OutputPass: op.OutputPass, mergeGeometries: bu.mergeGeometries, models });
 } catch (err) {
   console.error(err);
